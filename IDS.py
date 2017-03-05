@@ -18,18 +18,24 @@ import re
 import os
 import argparse
 import threading
+from Tkinter import *
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+
+#list of inputs you need
+fields = 'Attempts', 'Scantime', 'Timeban'
 
 # Adds this program as a crontab job
 # will check the /etc/crontab file and check if the same command already exists
 # -----------------------------------------------------------------------------------------
-def cronAdd(Attempts, Scantime, Timeban):
+def cronAdd(entries):
     checker = 0
+    
+    Attempts = entries[0][1].get()
 
     # Convert the times to seconds
-    Scantime = Scantime / 60
-    Timeban = Timeban / 60
+    Scantime = int(entries[1][1].get())
+    Timeban = int(entries[2][1].get())
 
     filepath = os.path.dirname(os.path.realpath(__file__))
     filename = os.path.basename(__file__)
@@ -203,11 +209,43 @@ class Handler(FileSystemEventHandler):
                     for user in Badattempt:
                         if user.IPaddr == IPaddr[0]:
                             timeStampArray = []
+                            
+                            
+#---------------------------------------------------
+# makeform - method to create input box and labels
+#
+# root - the GUI form
+# fields - list of inputs you want i.e (serverip, port)
+#-------------------------------------------------
+def makeform(root, fields):
+	entries = []
+
+	#for each field create an input
+	for field in fields:
+		row = Frame(root)
+		lab = Label(row, width=15, text = field , anchor ='w')
+		ent = Entry(row)
+		ent.config(highlightbackground = "gray")
+		row.pack(side=TOP, fill=X, padx=5, pady=5)
+		lab.pack(side=LEFT)
+		ent.pack(side=RIGHT,expand=YES, fill=X)
+		entries.append((field,ent))
+	return entries
 
 
 if __name__ == "__main__":
-    Attempts, Scantime, Timeban = Arguments()
-    cronAdd(Attempts, Scantime, Timeban)
+    #Attempts, Scantime, Timeban = Arguments()
+    #cronAdd(Attempts, Scantime, Timeban)
+    
+    root = Tk()
+    ents = makeform(root,fields)
+    
+    buttonFrame = Frame(root)
+    buttonFrame.pack(side=TOP,padx=5,pady=5)
+    
+    b1 = Button(root, text='Run', command=(lambda e=ents: cronAdd(e)))
+    b1.pack(in_=buttonFrame , side=LEFT, padx=5,pady=5)
+    
     event_handler = Handler()
 
     observer = Observer()
